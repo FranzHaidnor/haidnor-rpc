@@ -28,12 +28,14 @@ public class ChannelConnectionEventListener implements ChannelEventListener {
     }
 
     @Override
-    public void onChannelException(String s, Channel channel) {
-
+    public void onChannelAllIdle(String remoteAddr, Channel channel) {
+        ChannelId channelId = channel.id();
+        RpcServerInfo rpcServerInfo = ServerManager.getRPCServer(channelId);
+        if (rpcServerInfo != null) {
+            log.info("服务端空闲, 将服务端从注册中心移除. ChannelId:{} RPCServer:{}", channelId, rpcServerInfo);
+            ServerManager.cancellationServer(channel.id());
+        }
+        channel.close();
     }
 
-    @Override
-    public void onChannelIdle(String s, Channel channel) {
-
-    }
 }

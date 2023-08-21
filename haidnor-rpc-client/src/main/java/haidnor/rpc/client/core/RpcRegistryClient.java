@@ -14,10 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,20 +50,6 @@ public class RpcRegistryClient {
 
             TimeUnit.SECONDS.sleep(10);
         }
-    }
-
-    public static void main(String[] args) {
-        RpcServerInfo info = new RpcServerInfo();
-        info.setName("张三");
-        info.setAddress("1321323256:131");
-        Set<RpcServerInfo> set = new HashSet<>();
-        set.add(info);
-
-        byte[] jsonBytes = Jackson.toJsonBytes(set);
-
-        Set<RpcServerInfo> bean = Jackson.toBean(jsonBytes, new TypeReference<Set<RpcServerInfo>>() {
-        });
-        System.out.println(bean);
     }
 
 }

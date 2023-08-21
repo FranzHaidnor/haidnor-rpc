@@ -54,7 +54,7 @@ public class RpcRegistryClient {
      */
     public void start() {
         NettyClientConfig config = new NettyClientConfig();
-        config.setTimeoutMillis(1000 * 5);
+        config.setClientChannelMaxAllIdleTimeSeconds(30);
         RemotingClient client = new NettyRemotingClient(config, registryConfig.getAddress());
 
         client.registerChannelEventListener(new ChannelEventListener() {
@@ -64,7 +64,7 @@ public class RpcRegistryClient {
             }
 
             @Override
-            public void onChannelIdle(String s, Channel channel) {
+            public void onChannelAllIdle(String remoteAddr, Channel channel) {
                 sendHeartbeat(client);
             }
         });
@@ -81,6 +81,7 @@ public class RpcRegistryClient {
         try {
             client.invokeSync(request);
         } catch (Exception exception) {
+            log.error("Failed to connect to the registry center! Retry after 5 seconds.");
             TimeUnit.SECONDS.sleep(5);
             CompletableFuture.runAsync(() -> registerServer(client));
         }

@@ -41,6 +41,7 @@ public class ApplicationStartup implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         NettyServerConfig config = new NettyServerConfig();
+        config.setServerChannelMaxAllIdleTimeSeconds(60);
         config.setListenPort(port);
         RemotingServer server = new NettyRemotingServer(config, RegistryCommand.class);
 
