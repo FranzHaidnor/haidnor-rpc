@@ -2,6 +2,7 @@ package haidnor.rpc.client.core;
 
 import haidnor.remoting.protocol.RemotingCommand;
 import haidnor.rpc.client.annotation.RpcInterface;
+import haidnor.rpc.client.config.RpcClientConfig;
 import haidnor.rpc.common.command.ServerCommand;
 import haidnor.rpc.common.model.RemoteInvokeRequest;
 import haidnor.rpc.common.util.Jackson;
@@ -36,7 +37,7 @@ public class JdkProxyRpcHandler<T> implements InvocationHandler {
         String serverName = clientAnnotation.serverName();
         String serverAddress = RpcServerClientManager.getServerAddress(serverName);
 
-        RemotingCommand response = RpcServerClientManager.getClient().invokeSync(serverAddress, RemotingCommand.creatRequest(ServerCommand.REMOTE_INVOKE, Jackson.toJsonBytes(request)));
+        RemotingCommand response = RpcServerClientManager.getClient().invokeSync(serverAddress, RemotingCommand.creatRequest(ServerCommand.REMOTE_INVOKE, Jackson.toJsonBytes(request)), RpcClientConfig.requestTimeoutMillis);
         return Jackson.toBean(response.getBody(), method.getReturnType());
     }
 

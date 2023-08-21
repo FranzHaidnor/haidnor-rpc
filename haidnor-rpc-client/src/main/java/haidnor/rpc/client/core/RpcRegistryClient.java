@@ -46,7 +46,7 @@ public class RpcRegistryClient {
             Map<String, List<RpcServerInfo>> serverInfoMap = Jackson.toBean(response.getBody(), new TypeReference<>() {
             });
             RpcServerClientManager.updateServerInfoMap(serverInfoMap);
-            log.info("更新注册中心服务列表 {}", serverInfoMap);
+            log.debug("更新注册中心服务列表 {}", serverInfoMap);
 
             TimeUnit.SECONDS.sleep(10);
         }
