@@ -15,6 +15,6 @@ public class TestController {
     @RequestMapping("/getAge")
     public String test() {
         int age = studentService.getAge(1L);
-        return age + "";
+        return String.valueOf(age);
     }
 }
