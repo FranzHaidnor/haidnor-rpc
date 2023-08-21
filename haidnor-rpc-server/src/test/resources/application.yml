@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: RPC-Server
+
+rpc:
+  registry:
+    address: 127.0.0.1:8090
+  server:
+    port: 8080
