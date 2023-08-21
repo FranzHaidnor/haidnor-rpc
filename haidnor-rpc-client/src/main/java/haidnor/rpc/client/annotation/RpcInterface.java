@@ -15,6 +15,6 @@ public @interface RpcInterface {
     /**
      * RPC 服务名称
      */
-    String value();
+    String serverName();
 
 }

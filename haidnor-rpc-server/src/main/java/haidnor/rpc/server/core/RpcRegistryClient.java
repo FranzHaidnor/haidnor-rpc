@@ -55,7 +55,7 @@ public class RpcRegistryClient {
     public void start() {
         NettyClientConfig config = new NettyClientConfig();
         config.setClientChannelMaxAllIdleTimeSeconds(30);
-        RemotingClient client = new NettyRemotingClient(config, registryConfig.getAddress());
+        RemotingClient client = new NettyRemotingClient(config);
 
         client.registerChannelEventListener(new ChannelEventListener() {
             @Override
@@ -79,7 +79,7 @@ public class RpcRegistryClient {
         data.setName(serverConfig.getName());
         RemotingCommand request = RemotingCommand.creatRequest(RegistryCommand.REGISTER_SERVER, Jackson.toJsonBytes(data));
         try {
-            client.invokeSync(request);
+            client.invokeSync(registryConfig.getAddress(), request);
         } catch (Exception exception) {
             log.error("Failed to connect to the registry center! Retry after 5 seconds.");
             TimeUnit.SECONDS.sleep(5);
@@ -90,7 +90,7 @@ public class RpcRegistryClient {
     private void sendHeartbeat(RemotingClient client) {
         try {
             RemotingCommand request = RemotingCommand.creatRequest(RegistryCommand.HEARTBEAT);
-            client.invokeOneway(request);
+            client.invokeOneway(registryConfig.getAddress(), request);
         } catch (Exception exception) {
             exception.printStackTrace();
             try {

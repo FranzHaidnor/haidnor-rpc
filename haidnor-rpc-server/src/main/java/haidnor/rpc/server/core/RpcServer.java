@@ -34,6 +34,15 @@ public class RpcServer {
         NettyRemotingServer server = new NettyRemotingServer(nettyConfig, ServerCommand.class);
 
         ExecutorService executorService = Executors.newFixedThreadPool(4);
+
+        server.registerProcessor(ServerCommand.HEARTBEAT, new NettyRequestProcessor() {
+            @Override
+            public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
+                return RemotingCommand.createResponse(RemotingSysResponseCode.SUCCESS);
+            }
+        }, executorService);
+
+
         server.registerProcessor(ServerCommand.REMOTE_INVOKE, new NettyRequestProcessor() {
             @Override
             public RemotingCommand processRequest(ChannelHandlerContext channelHandlerContext, RemotingCommand remotingCommand) throws Exception {

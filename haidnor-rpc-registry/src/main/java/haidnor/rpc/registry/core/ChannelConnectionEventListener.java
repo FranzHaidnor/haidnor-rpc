@@ -3,7 +3,6 @@ package haidnor.rpc.registry.core;
 import haidnor.remoting.ChannelEventListener;
 import haidnor.rpc.common.model.RpcServerInfo;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelId;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -18,24 +17,22 @@ public class ChannelConnectionEventListener implements ChannelEventListener {
 
     @Override
     public void onChannelClose(String s, Channel channel) {
-        ChannelId channelId = channel.id();
-        RpcServerInfo rpcServerInfo = ServerManager.getRPCServer(channelId);
+        RpcServerInfo rpcServerInfo = ServerManager.getRPCServer(channel);
         if (rpcServerInfo != null) {
-            log.info("服务端主动断开连接, 将服务端从注册中心移除. ChannelId:{} RPCServer:{}", channelId, rpcServerInfo);
+            channel.close();
             ServerManager.cancellationServer(channel.id());
+            log.info("服务端主动断开连接, 将服务端从注册中心移除. RPCServer:{}", rpcServerInfo);
         }
-        channel.close();
     }
 
     @Override
     public void onChannelAllIdle(String remoteAddr, Channel channel) {
-        ChannelId channelId = channel.id();
-        RpcServerInfo rpcServerInfo = ServerManager.getRPCServer(channelId);
+        RpcServerInfo rpcServerInfo = ServerManager.getRPCServer(channel);
         if (rpcServerInfo != null) {
-            log.info("服务端空闲, 将服务端从注册中心移除. ChannelId:{} RPCServer:{}", channelId, rpcServerInfo);
+            channel.close();
             ServerManager.cancellationServer(channel.id());
+            log.info("服务端空闲, 将服务端从注册中心移除. RPCServer:{}", rpcServerInfo);
         }
-        channel.close();
     }
 
 }

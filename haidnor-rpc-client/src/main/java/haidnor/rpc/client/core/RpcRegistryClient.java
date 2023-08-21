@@ -37,11 +37,11 @@ public class RpcRegistryClient {
     @SneakyThrows
     public void start() {
         NettyClientConfig config = new NettyClientConfig();
-        RemotingClient client = new NettyRemotingClient(config, registryConfig.getAddress());
+        RemotingClient client = new NettyRemotingClient(config);
 
         while (true) {
             RemotingCommand request = RemotingCommand.creatRequest(RegistryCommand.GET_SERVERS_INFO);
-            RemotingCommand response = client.invokeSync(request);
+            RemotingCommand response = client.invokeSync(registryConfig.getAddress(), request);
 
             Map<String, List<RpcServerInfo>> serverInfoMap = Jackson.toBean(response.getBody(), new TypeReference<>() {
             });

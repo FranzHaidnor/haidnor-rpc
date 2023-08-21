@@ -1,6 +1,7 @@
 package haidnor.rpc.registry.core;
 
 import haidnor.rpc.common.model.RpcServerInfo;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelId;
 
 import java.util.List;
@@ -32,8 +33,8 @@ public class ServerManager {
         serverMap.remove(channelId);
     }
 
-    public static RpcServerInfo getRPCServer(ChannelId channelId) {
-        return serverMap.get(channelId);
+    public static RpcServerInfo getRPCServer(Channel channel) {
+        return serverMap.get(channel.id());
     }
 
     /**

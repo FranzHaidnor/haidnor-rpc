@@ -1,14 +1,17 @@
 package haidnor.rpc.client.core;
 
-import haidnor.remoting.RemotingClient;
+import haidnor.remoting.ChannelEventListener;
 import haidnor.remoting.core.NettyClientConfig;
 import haidnor.remoting.core.NettyRemotingClient;
+import haidnor.remoting.protocol.RemotingCommand;
+import haidnor.rpc.common.command.RegistryCommand;
 import haidnor.rpc.common.model.RpcServerInfo;
+import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -22,46 +25,55 @@ public class RpcServerClientManager {
     /**
      * 存放 RPC Netty 服务端连接
      * <p>
-     * Map<ServerName, Map<ServerAddress, RemotingClient>>
+     * Map<ServerName, String<ServerAddress>>
      */
-    private static final Map<String, Map<String, RemotingClient>> serverMap = new ConcurrentHashMap<>();
+    private static Map<String, List<RpcServerInfo>> serverMap = new ConcurrentHashMap<>();
 
-    /**
-     * 更新 RPC 服务端列表
-     * 新增服务端连接
-     */
-    public static void updateServerInfoMap(Map<String, List<RpcServerInfo>> serverInfoMap) {
-        serverInfoMap.forEach((serverName, serverList) -> {
-            Map<String, RemotingClient> map = serverMap.get(serverName);
-            if (map == null) {
-                map = new ConcurrentHashMap<>();
-                serverMap.put(serverName, map);
-            }
-            for (RpcServerInfo serverInfo : serverList) {
-                if (map.get(serverInfo.getAddress()) == null) {
-                    RemotingClient client = new NettyRemotingClient(new NettyClientConfig(), serverInfo.getAddress());
-                    map.put(serverInfo.getAddress(), client);
+    private static final NettyRemotingClient client;
+
+    private static final Random RANDOM = new Random();
+
+    static {
+        NettyClientConfig config = new NettyClientConfig();
+        config.setClientChannelMaxAllIdleTimeSeconds(10);
+        client = new NettyRemotingClient(config);
+        client.registerChannelEventListener(new ChannelEventListener() {
+            @Override
+            public void onChannelAllIdle(String remoteAddr, Channel channel) {
+                try {
+                    RemotingCommand request = RemotingCommand.creatRequest(RegistryCommand.HEARTBEAT);
+                    client.invokeSync(remoteAddr, request);
+                } catch (Exception exception) {
+                    client.closeChannel(channel);
+                    log.info("服务端下线,与服务端断开连接: {}", remoteAddr);
                 }
             }
+
+            @Override
+            public void onChannelException(String remoteAddr, Channel channel) {
+                client.closeChannel(channel);
+                log.info("服务端下线,与服务端断开连接: {}", remoteAddr);
+            }
         });
+
     }
 
-    public static RemotingClient getRpcClient(String serverName) {
-        // TODO 负载均衡
-        Map<String, RemotingClient> serverClientMap = serverMap.get(serverName);
-        return new ArrayList<>(serverClientMap.values()).get(0);
+    public static void updateServerInfoMap(Map<String, List<RpcServerInfo>> serverMap) {
+        RpcServerClientManager.serverMap = serverMap;
     }
 
-    /**
-     * 将 RpcClient 从 Map 中移除
-     *
-     * @param rpcServerInfo RPC 服务端信息
-     */
-    public static void removeRpcClient(RpcServerInfo rpcServerInfo) {
-        Map<String, RemotingClient> clientMap = serverMap.get(rpcServerInfo.getName());
-        if (clientMap != null && !clientMap.isEmpty()) {
-            clientMap.remove(rpcServerInfo.getAddress());
+    public static NettyRemotingClient getClient() {
+        return client;
+    }
+
+    public static String getServerAddress(String serverName) {
+        List<RpcServerInfo> serverList = serverMap.get(serverName);
+        if (serverList == null) {
+            throw new RuntimeException("not found " + serverName + " server instance!");
         }
+        // 请求负载均衡. 随机数算法
+        int randomIndex = RANDOM.nextInt(serverList.size());
+        return serverList.get(randomIndex).getAddress();
     }
 
 }
