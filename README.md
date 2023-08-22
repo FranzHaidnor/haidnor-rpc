@@ -4,7 +4,7 @@ Java RPC (Remote Procedure Call) 框架。由服务发现注册中心、客户�
 # 架构
 ![haidnor-rpc](./doc/images/haidnor-rpc.png)  
 **haidnor-rpc-registry**  
-服务注册中心。可独立运行的模块。独立模块，单独部署运行。
+服务注册中心。可独立运行的模块。独立模块，单独部署运行。支持高可用集群部署。
 
 **haidnor-rpc-server**    
 远程调用服务端。集成于 SpringBoot 项目运行。
@@ -48,7 +48,8 @@ spring:
 
 rpc:
   registry:
-    address: 127.0.0.1:8090 # 注册中心访问地址
+    address: 127.0.0.1:8090                         # 注册中心访问地址
+    # address: 127.0.0.1:8090,127.0.0.1:8091        # 注册中心集群模式配置. 多个地址使用逗号分隔
   server:
     port: 8080 # 本地服务端端口号
 ```
@@ -97,6 +98,7 @@ public class StudentServiceImpl implements StudentService {
 rpc:
   registry:
     address: 127.0.0.1:8090  #  注册中心访问地址
+    # address: 127.0.0.1:8090,127.0.0.1:8091        # 注册中心集群模式配置. 多个地址使用逗号分隔
   client:
     requestTimeoutMillis: 1000  # 远程调用请求超时时间。单位：毫秒
 ```
@@ -167,4 +169,5 @@ public class TestController {
 **4.RPC 客户端对服务端的连接管理策略**  
 客户端对于服务端的连接是懒加载的，只有在第一次远程调用的时候才会创建连接通道。客户端每间隔 10 秒会向 10 秒内无任何读写事件的服务端发送一次心跳检测。若发送心跳失败，将会直接关闭与服务端的连接。
 
-
+**5.注册中心集群**
+注册中心节点之间并无网络通信数据同步机制。
