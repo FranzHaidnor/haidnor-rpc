@@ -12,6 +12,6 @@ import org.springframework.stereotype.Component;
 public class RpcRegistryConfig {
 
     @Value("${rpc.registry.address}")
-    private String address;
+    private String[] address;
 
 }

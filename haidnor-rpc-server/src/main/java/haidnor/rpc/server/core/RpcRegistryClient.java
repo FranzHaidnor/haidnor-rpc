@@ -74,31 +74,37 @@ public class RpcRegistryClient {
 
     @SneakyThrows
     private void registerServer(RemotingClient client) {
-        RpcServerInfo data = new RpcServerInfo();
-        data.setAddress(serverConfig.getAddress());
-        data.setName(serverConfig.getName());
-        RemotingCommand request = RemotingCommand.creatRequest(RegistryCommand.REGISTER_SERVER, Jackson.toJsonBytes(data));
-        try {
-            client.invokeSync(registryConfig.getAddress(), request);
-        } catch (Exception exception) {
-            log.error("Failed to connect to the registry center! Retry after 5 seconds.");
-            TimeUnit.SECONDS.sleep(5);
-            CompletableFuture.runAsync(() -> registerServer(client));
+        String[] addressArr = registryConfig.getAddress();
+        for (String address : addressArr) {
+            RpcServerInfo data = new RpcServerInfo();
+            data.setAddress(serverConfig.getAddress());
+            data.setName(serverConfig.getName());
+            RemotingCommand request = RemotingCommand.creatRequest(RegistryCommand.REGISTER_SERVER, Jackson.toJsonBytes(data));
+            try {
+                client.invokeSync(address, request);
+            } catch (Exception exception) {
+                log.error("Failed to connect to the registry center! Retry after 5 seconds.");
+                TimeUnit.SECONDS.sleep(5);
+                CompletableFuture.runAsync(() -> registerServer(client));
+            }
         }
     }
 
     private void sendHeartbeat(RemotingClient client) {
-        try {
-            RemotingCommand request = RemotingCommand.creatRequest(RegistryCommand.HEARTBEAT);
-            client.invokeOneway(registryConfig.getAddress(), request);
-        } catch (Exception exception) {
-            exception.printStackTrace();
+        String[] addressArr = registryConfig.getAddress();
+        for (String address : addressArr) {
             try {
-                TimeUnit.SECONDS.sleep(5);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                RemotingCommand request = RemotingCommand.creatRequest(RegistryCommand.HEARTBEAT);
+                client.invokeOneway(address, request);
+            } catch (Exception exception) {
+                log.error("Failed to connect to the registry center! Retry after 5 seconds.");
+                try {
+                    TimeUnit.SECONDS.sleep(5);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                CompletableFuture.runAsync(() -> registerServer(client));
             }
-            CompletableFuture.runAsync(() -> registerServer(client));
         }
     }
 

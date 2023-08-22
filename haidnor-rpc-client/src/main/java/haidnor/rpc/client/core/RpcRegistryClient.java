@@ -31,6 +31,7 @@ public class RpcRegistryClient {
     @Autowired
     private RpcRegistryConfig registryConfig;
 
+
     /**
      * 启动注册中心客户端, 向注册中心注册此服务信息
      */
@@ -39,14 +40,27 @@ public class RpcRegistryClient {
         NettyClientConfig config = new NettyClientConfig();
         RemotingClient client = new NettyRemotingClient(config);
 
+        int addressArrIndex = 0;
+        String[] addressArr = registryConfig.getAddress();
+
         while (true) {
             RemotingCommand request = RemotingCommand.creatRequest(RegistryCommand.GET_SERVERS_INFO);
-            RemotingCommand response = client.invokeSync(registryConfig.getAddress(), request);
+            try {
+                RemotingCommand response = client.invokeSync(addressArr[addressArrIndex], request);
 
-            Map<String, List<RpcServerInfo>> serverInfoMap = Jackson.toBean(response.getBody(), new TypeReference<>() {
-            });
-            RpcServerClientManager.updateServerInfoMap(serverInfoMap);
-            log.debug("更新注册中心服务列表 {}", serverInfoMap);
+                addressArrIndex++;
+                if (addressArrIndex == addressArr.length) {
+                    addressArrIndex = 0;
+                }
+
+                Map<String, List<RpcServerInfo>> serverInfoMap = Jackson.toBean(response.getBody(), new TypeReference<>() {
+                });
+                RpcServerClientManager.updateServerInfoMap(serverInfoMap);
+                log.debug("更新注册中心服务列表 {}", serverInfoMap);
+
+            } catch (Exception exception) {
+                continue;
+            }
 
             TimeUnit.SECONDS.sleep(10);
         }
