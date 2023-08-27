@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,8 +56,14 @@ public class RpcServer {
                 }
                 Class<?> beanClass = rpcBean.getClass();
                 Method method = beanClass.getMethod(invokeParam.getMethodName(), invokeParam.getParameterTypes());
-                Object result = method.invoke(rpcBean, invokeParam.getParameters());
-
+                Object result;
+                try {
+                    result = method.invoke(rpcBean, invokeParam.getParameters());
+                } catch (Exception exception) {
+                    Throwable targetException = ((InvocationTargetException) exception).getTargetException();
+                    log.error("Remote Invoke Exception: ", targetException);
+                    return RemotingCommand.createResponse(RemotingSysResponseCode.SYSTEM_ERROR, targetException.toString());
+                }
                 return RemotingCommand.createResponse(RemotingSysResponseCode.SUCCESS, Jackson.toJsonBytes(result));
             }
         }, executorService);

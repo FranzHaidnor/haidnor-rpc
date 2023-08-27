@@ -4,6 +4,7 @@ spring:
 
 rpc:
   registry:
-    address: 127.0.0.1:8090,127.0.0.1:8091
+    address: 127.0.0.1:8090
+#    address: 127.0.0.1:8090,127.0.0.1:8091
   server:
     port: 8080

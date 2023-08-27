@@ -67,7 +67,7 @@ public interface StudentService {
 package test.service.impl;
 
 import haidnor.rpc.server.annotation.RpcService;
-import test.service.StudentService;
+import test.service.DogService;
 
 @RpcService
 public class StudentServiceImpl implements StudentService {
@@ -138,7 +138,7 @@ public class ClientApplication {
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import test.service.StudentService;
+import test.service.DogService;
 
 @RestController
 @RequestMapping("/test")
