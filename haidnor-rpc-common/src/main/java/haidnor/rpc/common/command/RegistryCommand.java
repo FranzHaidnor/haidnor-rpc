@@ -1,9 +1,6 @@
 package haidnor.rpc.common.command;
 
 public enum RegistryCommand {
-    //心跳消息
-    HEARTBEAT,
-
     // 服务端向注册中心注册此服务信息
     REGISTER_SERVER,
 

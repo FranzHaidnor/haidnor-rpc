@@ -1,6 +1,5 @@
 package haidnor.rpc.server.core;
 
-import haidnor.remoting.ChannelEventListener;
 import haidnor.remoting.RemotingClient;
 import haidnor.remoting.core.NettyClientConfig;
 import haidnor.remoting.core.NettyRemotingClient;
@@ -10,12 +9,13 @@ import haidnor.rpc.common.model.RpcServerInfo;
 import haidnor.rpc.common.util.Jackson;
 import haidnor.rpc.server.config.RpcRegistryConfig;
 import haidnor.rpc.server.config.RpcServerConfig;
-import io.netty.channel.Channel;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -54,22 +54,16 @@ public class RpcRegistryClient {
      */
     public void start() {
         NettyClientConfig config = new NettyClientConfig();
-        config.setClientChannelMaxAllIdleTimeSeconds(30);
         RemotingClient client = new NettyRemotingClient(config);
 
-        client.registerChannelEventListener(new ChannelEventListener() {
+        registerServer(client);
+
+        new Timer().schedule(new TimerTask() {
             @Override
-            public void onChannelException(String remoteAddr, Channel channel) {
+            public void run() {
                 registerServer(client);
             }
-
-            @Override
-            public void onChannelAllIdle(String remoteAddr, Channel channel) {
-                sendHeartbeat(client);
-            }
-        });
-
-        registerServer(client);
+        },20000,20000);
     }
 
     @SneakyThrows
@@ -85,24 +79,6 @@ public class RpcRegistryClient {
             } catch (Exception exception) {
                 log.error("Failed to connect to the registry center! Retry after 5 seconds.");
                 TimeUnit.SECONDS.sleep(5);
-                CompletableFuture.runAsync(() -> registerServer(client));
-            }
-        }
-    }
-
-    private void sendHeartbeat(RemotingClient client) {
-        String[] addressArr = registryConfig.getAddress();
-        for (String address : addressArr) {
-            try {
-                RemotingCommand request = RemotingCommand.creatRequest(RegistryCommand.HEARTBEAT);
-                client.invokeOneway(address, request);
-            } catch (Exception exception) {
-                log.error("Failed to connect to the registry center! Retry after 5 seconds.");
-                try {
-                    TimeUnit.SECONDS.sleep(5);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
                 CompletableFuture.runAsync(() -> registerServer(client));
             }
         }

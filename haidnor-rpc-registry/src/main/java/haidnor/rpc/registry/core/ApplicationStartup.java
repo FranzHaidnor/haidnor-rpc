@@ -51,19 +51,12 @@ public class ApplicationStartup implements ApplicationRunner {
         /* ------------------------------------------------------------------------------------------------------------ */
         ExecutorService executorService = Executors.newFixedThreadPool(8);
 
-        server.registerProcessor(RegistryCommand.HEARTBEAT, new NettyRequestProcessor() {
-            @Override
-            public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
-                return RemotingCommand.createResponse(RemotingSysResponseCode.SUCCESS);
-            }
-        }, executorService);
-
         server.registerProcessor(RegistryCommand.REGISTER_SERVER, new NettyRequestProcessor() {
             @Override
             public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
                 RpcServerInfo serverInfo = Jackson.toBean(request.getBody(), RpcServerInfo.class);
                 ServerManager.registerServer(ctx.channel().id(), serverInfo);
-                log.info("服务端注册成功: {}", serverInfo);
+                log.info("服务端注册: {}", serverInfo);
                 return RemotingCommand.createResponse(RemotingSysResponseCode.SUCCESS);
             }
         }, executorService);
